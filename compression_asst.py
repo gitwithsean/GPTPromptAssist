@@ -11,7 +11,7 @@ def open_file(filepath):
     with open(filepath, 'r', encoding='utf-8', errors='ignore') as infile:
         return infile.read()
 
-openai.api_key = open_file('orig_text.txt')
+openai.api_key = open_file('.env')
 
 data = {
         "original_text": open_file('originals/orig_text.txt'),
