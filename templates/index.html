@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compression and Decompression Web App</title>
+</head>
+<body>
+    <h1>Compression and Decompression Web App</h1>
+    <form id="input-form">
+        <label for="original_text">Original Text:</label><br>
+        <textarea id="original_text" name="original_text" rows="4" cols="50"></textarea><br><br>
+        
+        <label for="compressor_prompt_candidate">Compressor Prompt Candidate:</label><br>
+        <textarea id="compressor_prompt_candidate" name="compressor_prompt_candidate" rows="4" cols="50"></textarea><br><br>
+        
+        <label for="decompressor_prompt_candidate">Decompressor Prompt Candidate:</label><br>
+        <textarea id="decompressor_prompt_candidate" name="decompressor_prompt_candidate" rows="4" cols="50"></textarea><br><br>
+        
+        <input type="submit" value="Submit">
+    </form>
+    
+    <pre id="results"></pre>
+
+    <script>
+        document.getElementById("input-form").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const original_text = document.getElementById("original_text").value;
+            const compressor_prompt_candidate = document.getElementById("compressor_prompt_candidate").value;
+            const decompressor_prompt_candidate = document.getElementById("decompressor_prompt_candidate").value;
+
+            const response = await fetch("/process", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    original_text: original_text,
+                    compressor_prompt_candidate: compressor_prompt_candidate,
+                    decompressor_prompt_candidate: decompressor_prompt_candidate,
+                }),
+            });
+
+            const results = await response.json();
+
+            document.getElementById("results").textContent = JSON.stringify(results, null, 2);
+        });
+    </script>
+</body>
+</html>

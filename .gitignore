@@ -1,0 +1,4 @@
+.env
+prompts/*
+originals/*
+__pycache__
