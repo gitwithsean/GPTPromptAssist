@@ -66,6 +66,16 @@ def calc_compression_ratio(original_text=data["original_text"], compressed_text=
     ratio = wrd_cnt_comp / wrd_cnt_orig
     return round(ratio, 3)
 
+def clean_json(json_string):
+    replacements = [
+        ("\n", ""),
+        ("\r", ""),
+        ('\"', '"')
+    ]
+    for old, new in replacements:
+        json_string.replace(old, new)
+    return json_string
+    
 
 def main():
     iterator = 0
@@ -77,7 +87,23 @@ def main():
         print("\n\n------- Moving on to next iteration -------\n\n")
 
 def run(input, iterator):
+    data = {}
     data = input
+    # pretty_input = json.dumps(input, indent=2)
+    # print("\n\nINPUT:\n\n")
+    # print(pretty_input)
+    # print("\n\nDATA:\n\n")
+    # pretty_data = json.dumps(data, indent=2)
+    # print(pretty_data)
+    # print("\n\n\n\n")
+    
+    compressor_model = data["compressor_model"]
+    decompressor_model = data["decompressor_model"]
+    assistant_model = data["assistant_model"]
+    print(f"iteration {iterator} compressor_model: {compressor_model}")
+    print(f"iteration {iterator} decompressor_model: {decompressor_model}")
+    print(f"iteration {iterator} assistant_model: {assistant_model}")
+    
     compressor_prompt_candidate = data["compressor_prompt_candidate"]
     decompressor_prompt_candidate = data["decompressor_prompt_candidate"]
     reflection_prompt_candidate = data["reflection_prompt_candidate"]
@@ -86,7 +112,7 @@ def run(input, iterator):
     bleu_score = 0
     rouge_score = 0
     style_preservation_score = 0
-    semantic_preservation_score
+    semantic_preservation_score = 0
     subFolder = f"{datetime.datetime.now()}"
 
     try:
@@ -109,7 +135,7 @@ def run(input, iterator):
 
         # Reflect on the results and suggest improvements
         reflection_prompt = (
-            f"{reflection_prompt_candidate}\n\nOutput ONLY a JSON consisting of the following properties, 'analysis', 'suggested_improvements', 'new_compressor_prompt_candidate', 'new_decompressor_prompt_candidate', 'semantic_preservation_score, style_preservation_score'.\n\n"
+            f"{reflection_prompt_candidate}\n\nProvide a response in JSON format ONLY, NO PLAIN TEXT, that includes the following information: 'thoughts', 'suggested_improvements', 'new_compressor_prompt_candidate', 'new_decompressor_prompt_candidate', 'semantic_preservation_score, style_preservation_score'.\n\n"
             f"Original Text: {original_text}\n\n"
             f"Compressor Prompt: {compressor_prompt_candidate}\n\n"
             f"Compressed Text: {compressed_text}\n\n"
@@ -121,22 +147,32 @@ def run(input, iterator):
         
         reflection_response = gpt_response(
             data['assistant_model'], reflection_prompt, data["completion_config"])
+        
+        # print("\n\nPRETTY DATA\n\n")
+        # pretty_data = json.dumps(reflection_response.choices[0].text, indent=2)
+        # print(clean_json(pretty_data))
+        # print("\n\n\n\n")
+        
         reflection_response_json = json.loads(
             reflection_response.choices[0].text.strip())
         semantic_preservation_score = reflection_response_json["semantic_preservation_score"]
         style_preservation_score = reflection_response_json["style_preservation_score"]
         gpt_score = reflection_response_json["gpt_score"]
-        print(f"iteration {iterator} Semantic Score: {semantic_preservation_score}")
-        print(f"iteration {iterator} Style Score: {style_preservation_score}\n\n")
-        print(f"iteration {iterator} GPT Score: {gpt_score}\n\n")
-
-        pretty_reflection_response = json.dumps(
-            reflection_response_json, indent=2)
+        thoughts = reflection_response_json["thoughts"]
+        suggested_improvements = reflection_response_json["suggested_improvements"]
+        new_compressor_prompt_candidate = reflection_response_json["new_compressor_prompt_candidate"]
+        new_decompressor_prompt_candidate = reflection_response_json["new_decompressor_prompt_candidate"]
         
-        print(pretty_reflection_response["analysis"])
-        print(pretty_reflection_response["suggested_improvements"])
-        print(pretty_reflection_response["new_compressor_prompt_candidate"])
-        print(pretty_reflection_response["new_decompressor_prompt_candidate"])
+        print(f"iteration {iterator} Semantic Score: {semantic_preservation_score}")
+        print(f"iteration {iterator} Style Score: {style_preservation_score}")
+        print(f"iteration {iterator} GPT Score: {gpt_score}\n\n")
+        print(f"iteration {iterator} thoughts:\n{thoughts}\n\n")
+        print(f"iteration {iterator} suggested_improvements:\n{suggested_improvements}\n\n")
+        print(f"iteration {iterator} new_compressor_prompt_candidate:\n{new_compressor_prompt_candidate}\n\n")
+        print(f"iteration {iterator} new_decompressor_prompt_candidate:\n{new_decompressor_prompt_candidate}\n\n")
+        
+        # pretty_reflection_response = json.dumps(
+        #     reflection_response_json, indent=2)
         
         iteration_data = {
             "iteration": iterator,
@@ -151,9 +187,9 @@ def run(input, iterator):
             "compressed_text": compressed_text,
             "decompressor_prompt_candidate": decompressor_prompt_candidate,
             "decompressed_text": decompressed_text,
-            "reflection_response": pretty_reflection_response,
-            "assistant_model": data['compressor_model'],
-            "assistant_model": data['decompressor_model'],
+            "reflection_response": reflection_response_json,
+            "compressor_model": data['compressor_model'],
+            "decompressor_model": data['decompressor_model'],
             "assistant_model": data['assistant_model'],
             "completion_config": data['completion_config'],
             "token_info": reflection_response["usage"]
@@ -177,7 +213,7 @@ def run(input, iterator):
     except Exception as e:
         print("\n\n ------- An Exception Occurred ------- \n\n")
         print(f"\nException: {e}\n")
-        print(pretty_reflection_response)
+        print(reflection_response)
         current_state = {
             "iteration": iterator,
             "most_recent_compressor_prompt": compressor_prompt_candidate,
@@ -186,12 +222,14 @@ def run(input, iterator):
             "reflection_response": pretty_reflection_response,
             "exception": e
         }
-        pretty_current_state = json.dumps(current_state, indent=2)
-        print(pretty_current_state)
+        pretty_current_state = json.loads(current_state)
+        print(pretty_current_state.test.strip())
         print("\n\n ------------------------------------- \n\n")
 
 
 if __name__ == "__main__":
     main()
 
+if __name__ == "__run__":
+    main()
 
